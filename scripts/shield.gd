@@ -14,6 +14,8 @@ enum State { HELD, OUT, RETURNING }
 @export var return_speed := 420.0  # a bit faster than the throw so it always catches up
 @export var max_distance := 140.0  # how far it flies before turning back
 @export var hold_offset := 10.0    # where it sits next to the player while held
+@export var down_offset := 18.0    # how far below the player's center it sits when held down
+                                   # (below the feet, so it touches spikes/enemies before the body does)
 
 var state := State.HELD
 var player: Node2D                 # set by the player in its _ready()
@@ -26,6 +28,7 @@ func throw(direction: float) -> bool:
 	if state != State.HELD:
 		return false
 	state = State.OUT
+	rotation = 0.0 # stand upright again if it was held down
 	_velocity = Vector2(direction * throw_speed, 0.0)
 	_traveled = 0.0
 	return true
@@ -34,8 +37,14 @@ func throw(direction: float) -> bool:
 func _physics_process(delta: float) -> void:
 	match state:
 		State.HELD:
-			# Glue it to the player's front side. `facing` is 1 (right) or -1 (left).
-			global_position = player.global_position + Vector2(player.facing * hold_offset, 0.0)
+			if player.shield_down:
+				# Under the feet, turned flat (90°) like a plate.
+				global_position = player.global_position + Vector2(0.0, down_offset)
+				rotation = PI / 2
+			else:
+				# Glue it to the player's front side. `facing` is 1 (right) or -1 (left).
+				global_position = player.global_position + Vector2(player.facing * hold_offset, 0.0)
+				rotation = 0.0
 
 		State.OUT:
 			global_position += _velocity * delta
@@ -57,5 +66,17 @@ func _physics_process(delta: float) -> void:
 func _touching_wall() -> bool:
 	for body in get_overlapping_bodies():
 		if body != player:
+			return true
+	return false
+
+
+## Asked by the player every frame while the shield is held down.
+## Anything in the "pogo" group can be bounced on: spikes now, enemies and bullets later.
+## A *group* is a tag you put on nodes; this way the shield doesn't need to know what spikes are.
+func touching_pogo_target() -> bool:
+	if state != State.HELD:
+		return false # shield is flying: nothing under your feet
+	for area in get_overlapping_areas():
+		if area.is_in_group("pogo"):
 			return true
 	return false

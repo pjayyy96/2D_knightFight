@@ -87,3 +87,34 @@ Controls: **A/D or ←/→** move · **Space / W / ↑** jump · **J** throw shi
 - Throw it at the *LeftWall* from close up. It bounces back early.
 - Break the test on purpose: change `return_speed` to 0 and run the test. Read the FAIL lines,
   then put it back.
+
+---
+
+## Milestone 4 — Pogo (hold **S / ↓** in the air)
+
+**Read**
+1. `scripts/spikes.gd`: a hazard that kills your body, but is in the `"pogo"` group.
+2. `scripts/shield.gd`: the `HELD` branch puts the shield under your feet, turned flat, when
+   `player.shield_down`. `touching_pogo_target()` looks for anything in the `"pogo"` group.
+3. `scripts/player.gd`: step 7 (pogo check), plus `pogo()` and `die()` at the bottom.
+4. `scenes/main.tscn`: *PracticeSpikes* under LeftPlatform, and the 200 px *SpikeField* past the pit.
+5. `tests/test_pogo.gd`: drops the knight on spikes twice, with and without the shield.
+
+**Key ideas**
+- **Groups = tags.** The shield doesn't know what spikes are. It only asks "is this in `pogo`?".
+  Enemies and bullets (milestone 5) join the same group, and the pogo code doesn't change at all.
+- **The bounce refills your double jump.** That makes chains possible: bounce, double jump, bounce...
+  That chaining is the heart of this genre.
+- **Order inside a frame matters.** The first version checked the bounce in the *shield*, which
+  runs *after* the player moved. The test caught it: the knight bounced *and* died, because in that
+  one frame the body had already dropped onto the spikes. The fix was to check *before*
+  `move_and_slide()`. The shield sits 10 px below the feet and the fastest fall is about 7 px per
+  frame, so the body can't reach the spikes first anymore.
+- **Duck typing.** Spikes call `die()` on anything that *has* a `die()` method. They don't care
+  that it's the player.
+
+**Try this**
+- Cross *SpikeField* with only pogos, then with pogo + double jump chains.
+- Set `pogo_velocity` to -450 for huge bounces, or -150 for tiny ones.
+- Set the shield's `down_offset` to 8 (closer to the feet) and run `test_pogo.gd`. Does it still
+  pass? Why or why not? (Hint: 7 px per frame.)

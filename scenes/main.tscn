@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1"]
 [ext_resource type="Script" path="res://scripts/platform.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/spikes.gd" id="3"]
 
 [node name="Main" type="Node2D"]
 
@@ -40,6 +41,16 @@ color = Color(0.55, 0.45, 0.25, 1)
 position = Vector2(-220, 30)
 script = ExtResource("2")
 size = Vector2(80, 12)
+
+[node name="PracticeSpikes" type="Area2D" parent="."]
+position = Vector2(-200, 78)
+script = ExtResource("3")
+width = 160.0
+
+[node name="SpikeField" type="Area2D" parent="."]
+position = Vector2(580, 78)
+script = ExtResource("3")
+width = 200.0
 
 [node name="Player" parent="." instance=ExtResource("1")]
 position = Vector2(0, 60)

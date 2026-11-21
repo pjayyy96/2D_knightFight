@@ -17,8 +17,12 @@ extends CharacterBody2D
 @export var coyote_time := 0.1      # seconds you may still jump after walking off a ledge
 @export var jump_buffer := 0.1      # seconds a jump press is "remembered" before landing
 @export var air_jumps := 1          # extra jumps allowed in the air (1 = double jump)
+@export var pogo_velocity := -300.0 # bounce speed when the downward shield hits something
+
+signal died # emitted by die(); checkpoints (milestone 7) will listen to it
 
 var air_jumps_left := 0
+var shield_down := false # true while airborne + holding S/↓. The shield reads this.
 var coyote_timer := 0.0
 var buffer_timer := 0.0
 var spawn_point := Vector2.ZERO
@@ -76,14 +80,34 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, friction * delta)
 
-	# 7. Let Godot move us and resolve collisions (also updates is_on_floor()).
+	# 7. Pogo, BEFORE moving. The shield sits below our feet, so it reaches spikes first.
+	#    Bouncing now (before this frame's move) means the body never gets there.
+	#    Only while falling, otherwise rising out of a bounce would re-trigger it.
+	shield_down = not is_on_floor() and Input.is_action_pressed("shield_down")
+	if shield_down and velocity.y > 0.0 and shield.touching_pogo_target():
+		pogo()
+
+	# 8. Let Godot move us and resolve collisions (also updates is_on_floor()).
 	move_and_slide()
 
-	# 8. Throw the shield the way we face. The shield refuses if it's already flying.
+	# 9. Throw the shield the way we face. The shield refuses if it's already flying.
 	if Input.is_action_just_pressed("throw"):
 		shield.throw(facing)
 
-	# Fell into a pit -> back to start. (Real death/checkpoints come in milestone 7.)
+	# Fell into a pit.
 	if position.y > 600.0:
-		position = spawn_point
-		velocity = Vector2.ZERO
+		die()
+
+
+## Called by the shield when it lands on something bounceable.
+## The bounce also gives back the air jumps, so you can chain: bounce → double jump → bounce...
+func pogo() -> void:
+	velocity.y = pogo_velocity
+	air_jumps_left = air_jumps
+
+
+## Back to the start. (Health and checkpoints come in milestones 6–7.)
+func die() -> void:
+	position = spawn_point
+	velocity = Vector2.ZERO
+	died.emit()
