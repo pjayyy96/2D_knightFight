@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1"]
 [ext_resource type="Script" path="res://scripts/platform.gd" id="2"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/hud.gd" id="6"]
 [ext_resource type="PackedScene" path="res://scenes/checkpoint.tscn" id="7"]
 [ext_resource type="Script" path="res://scripts/slope.gd" id="8"]
+[ext_resource type="PackedScene" path="res://scenes/level_exit.tscn" id="9"]
 
 [node name="Main" type="Node2D"]
 
@@ -93,6 +94,10 @@ position = Vector2(230, 68)
 
 [node name="CheckpointB" parent="." instance=ExtResource("7")]
 position = Vector2(700, 68)
+
+[node name="LevelExit" parent="." instance=ExtResource("9")]
+position = Vector2(1360, 60)
+level_id = 1
 
 [node name="Player" parent="." instance=ExtResource("1")]
 position = Vector2(0, 60)

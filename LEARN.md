@@ -306,3 +306,54 @@ Open `scenes/boss_arena.tscn` and press **F6** (runs just this scene). Green blo
 - Set `hit_cooldown` to 0.3 and run `test_boss.gd`. Read which check fails and why.
 - Set `shots` to 6 and `shot_interval` to 0.25 for a bullet wall. Is it still fair?
 - Beat it without throwing once (pogo only), then without pogoing once (throws only).
+
+---
+
+## Milestone 10 — World map
+
+*(Built in parallel by a helper agent while milestone 8 was made.)*
+
+The game now starts on a **map**. A/D (or ←/→) walks the knight between levels, Space enters one.
+Grey = locked, gold = open, green = done. Beat a level (walk into the yellow **EXIT** gate at the
+very end of level 1, past the slide gap, or defeat the boss) and you return to the map with the
+next level open. Progress and gold are saved, so they're still there after you quit.
+
+**Read**
+1. `scripts/world_map.gd`: the `LEVELS` list at the top, then `move_cursor()`, `enter_level()` and
+   `_draw()`. The whole map is drawn from that list plus GameState.
+2. `scripts/game_state.gd`: the bottom half. `unlocked`, `complete_level()`, `finish_level()`,
+   `save_game()` / `load_game()`.
+3. `scripts/level_exit.gd` and `scripts/boss_arena.gd`: two different "you won" triggers that
+   both end in the same `GameState.finish_level(id)`.
+4. `tests/test_world_map.gd`: plays map → level → win → map, saving to a temp file.
+
+**Key ideas**
+- **One number can be the whole save.** Levels are played in order, so "highest unlocked level"
+  also tells you which ones are beaten. Simple data = simple save file. (A branching map would
+  need a list of beaten levels instead; see the `shortcut:` comment.)
+- **Data, not hand-placed nodes.** The map draws itself from `LEVELS`. Adding level 3 is one line,
+  and the picture can never disagree with the save.
+- **ConfigFile** writes `[section]` and `key=value` text, the same format as `project.godot`.
+  `user://` is a per-game folder Godot picks (on Windows: `%APPDATA%\Godot\app_userdata\2D Knight Fight`).
+  Open `save.cfg` in Notepad after beating level 1.
+- **Don't trust files.** `load_game()` wraps values in `int()` and keeps the starting values when
+  there's no save yet. A missing or hand-edited file must not crash the game.
+- **Who survives a scene change?** `change_scene_to_file` throws the current level away. The
+  "wait, then go back to the map" countdown lives in GameState, the autoload, which stays.
+- **Signals pay off.** The boss has emitted `defeated` since milestone 9. Now a 10-line arena
+  script listens to it, and `boss.gd` didn't change.
+- **Tests must not touch your real data.** `save_path` is a variable, so the test points it at a
+  temp file and deletes it at the end.
+
+**Try this**
+- Beat level 1, quit, start again. Then delete `save.cfg` from the folder above and start once more.
+- Add a third line to `LEVELS` that points at `res://scenes/main.tscn` again. Watch it appear
+  locked, then open after the boss.
+- Set `WIN_DELAY` to 0 in `game_state.gd`. Does the win still feel like a win?
+- In `world_map.gd`, delete `or not GameState.is_unlocked(next + 1)` and run `test_world_map.gd`.
+  Read the FAIL line, then put it back.
+
+**Known limits**
+- Gold is saved only when you finish a level. Quit mid-level and that level's gold is lost.
+- Running a level directly with F6 skips the save (gold starts at 0). That's handy for testing.
+- During the 1.5 s win pause the game keeps running. You can still get hit, but the win is already saved.
