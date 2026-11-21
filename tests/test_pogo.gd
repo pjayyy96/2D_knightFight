@@ -4,6 +4,7 @@ extends SceneTree
 ##   godot --headless --path . --script tests/test_pogo.gd
 
 var failures := 0
+var gs: Node # the GameState autoload (see the note in test_enemies.gd)
 
 
 func check(ok: bool, what: String) -> void:
@@ -13,14 +14,15 @@ func check(ok: bool, what: String) -> void:
 
 
 func _initialize() -> void:
+	await process_frame
+	gs = root.get_node("GameState")
 	var with_shield := await drop_onto_spikes(true)
 	check(with_shield.bounced, "shield down: bounces off spikes")
 	check(with_shield.refilled, "shield down: bounce refills air jumps")
-	check(with_shield.deaths == 0, "shield down: doesn't die")
+	check(with_shield.hurts == 0, "shield down: not hurt")
 
 	var without := await drop_onto_spikes(false)
-	check(not without.bounced, "no shield: no bounce")
-	check(without.deaths > 0, "no shield: spikes kill")
+	check(without.hurts > 0, "no shield: spikes hurt")
 
 	print("pogo tests: ", "OK" if failures == 0 else "FAILED (%d)" % failures)
 	quit(failures)
@@ -37,8 +39,9 @@ func drop_onto_spikes(hold_shield_down: bool) -> Dictionary:
 	var player = load("res://scenes/player.tscn").instantiate()
 	level.add_child(player) # starts at (0, 0), falling, with 0 air jumps left
 
-	var result := {"bounced": false, "refilled": false, "deaths": 0}
-	player.died.connect(func(): result.deaths += 1)
+	gs.refill()
+	var result := {"bounced": false, "refilled": false, "hurts": 0}
+	player.hurt.connect(func(): result.hurts += 1)
 	if hold_shield_down:
 		Input.action_press("shield_down") # fake holding the key
 	for i in 90:

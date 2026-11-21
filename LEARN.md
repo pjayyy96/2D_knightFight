@@ -157,3 +157,45 @@ Red **Walker** patrols LowPlatform. Purple **Shooter** sits near the pit and fir
 - Kill the Walker by pogo from HighPlatform, and the Shooter with a throw.
 - Select *Shooter* in `main.tscn` and set `fire_interval` to 0.5. Can you pogo across the bullet stream?
 - Delete `super()` in `enemy_shooter.gd`, run, and try to pogo the Shooter. Then put it back.
+
+---
+
+## Milestone 6 — Health, mana, gold
+
+The top-left line shows `HP 3/3  MANA 4/4  GOLD 0`.
+
+| Event | Effect |
+|---|---|
+| Throw the shield | −1 mana (no mana = no throw) |
+| Pogo an enemy or bullet | +1 mana |
+| Kill an enemy | +1 gold (bullets pay nothing) |
+| Body touches enemy, bullet or spikes | −1 HP, knocked away, 1 s flicker (can't be hurt) |
+| HP hits 0, or fall in the pit | back to start, HP and mana full, **gold kept** |
+
+**Read**
+1. `scripts/game_state.gd` and the `[autoload]` section in `project.godot`.
+2. `scripts/hud.gd` and the *HUD* node at the bottom of `main.tscn`.
+3. `scripts/player.gd`: the *Combat* exports, step 9 (paying for throws), step 10 (flicker),
+   and `take_hit()` / `die()`.
+4. `scripts/enemy.gd` `hit()`: pays gold, but never twice.
+
+**Key ideas**
+- **Autoload = global singleton.** One `GameState` node lives above every level, so any
+  script can read or change `GameState.gold`. Keep it small: only data that must outlive a
+  scene belongs there.
+- **Signals decouple.** `GameState` doesn't know the HUD exists. It just announces `changed`,
+  and whoever cares listens. A sound effect or a shop could listen to the same signal later.
+- **The core loop is now real.** Throwing costs mana, and only pogo kills give it back. Playing
+  safe on the ground runs you dry, so the game *pushes* you into the air.
+- **Invincibility frames** stop one hit from draining all your HP in a quarter second. The flicker
+  tells the player "you're safe for a moment".
+- **Signal vs per-frame check.** `body_entered` only fires on *entering*. Spikes now check every
+  frame instead, otherwise landing in them while flickering would make you immune forever.
+  Enemies still use the signal (see the `shortcut:` comment in `enemy.gd`).
+- **Testing autoloads.** Tests reach GameState as `gs` and `load()` scenes at runtime. The note
+  at the top of `test_enemies.gd` explains why.
+
+**Try this**
+- Throw 4 times without pogoing. Then refill by bouncing on the Walker or on bullets.
+- Set `MAX_HP` to 1 in `game_state.gd` for "one hit = death" mode.
+- Set the player's `invincible_time` to 0 and stand in the spikes. Count how fast you die.

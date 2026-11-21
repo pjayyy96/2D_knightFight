@@ -8,6 +8,10 @@ extends Enemy
 var direction := -1.0
 
 
+func _init() -> void:
+	gold_value = 0 # popping bullets pays nothing
+
+
 func _physics_process(delta: float) -> void:
 	position.x += direction * speed * delta
 	lifetime -= delta
@@ -15,7 +19,7 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 
 
-# Override: kill the player like any enemy, but ALSO vanish on walls.
+# Override: hurt the player like any enemy, but ALSO vanish on walls.
 func _on_body_entered(body: Node2D) -> void:
 	super(body)
 	hit()

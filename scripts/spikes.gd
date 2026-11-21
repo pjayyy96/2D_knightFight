@@ -1,6 +1,6 @@
 @tool # draws in the editor too, like platform.gd
 extends Area2D
-## A strip of spikes. Touch them with your body: back to start.
+## A strip of spikes. Touch them with your body: lose 1 HP and get knocked up and away.
 ## Land on them with the shield held down (S/↓ in the air): bounce!
 ## That works because spikes join the "pogo" group, which the shield looks for.
 
@@ -25,13 +25,18 @@ func _ready() -> void:
 	collision.shape = shape
 	collision.position.y = HEIGHT / 4
 	add_child(collision)
-	body_entered.connect(_on_body_entered)
 
 
-func _on_body_entered(body: Node2D) -> void:
-	# "Duck typing": we don't check *what* it is, only whether it can die.
-	if body.has_method("die"):
-		body.die()
+# Checked EVERY frame, not with the `body_entered` signal: that only fires on *entering*,
+# so someone who landed in the spikes while invincible could then stand there safely forever.
+# Repeated hits are fine, because the player ignores them while flickering.
+func _physics_process(_delta: float) -> void:
+	if Engine.is_editor_hint():
+		return # @tool scripts run in the editor too; don't do game logic there
+	for body in get_overlapping_bodies():
+		# "Duck typing": we don't check *what* it is, only whether it can be hurt.
+		if body.has_method("take_hit"):
+			body.take_hit(global_position)
 
 
 func _draw() -> void:

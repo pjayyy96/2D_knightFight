@@ -19,7 +19,16 @@ extends CharacterBody2D
 @export var air_jumps := 1          # extra jumps allowed in the air (1 = double jump)
 @export var pogo_velocity := -300.0 # bounce speed when the downward shield hits something
 
+@export_group("Combat")
+@export var throw_cost := 1          # mana per throw
+@export var pogo_kill_mana := 1      # mana back for each enemy you pogo
+@export var invincible_time := 1.0   # seconds of safety after a hit (you flicker)
+@export var knockback := Vector2(160, -220) # pushed away and up when hit
+
+signal hurt # emitted by take_hit() when it actually hurts
 signal died # emitted by die(); checkpoints (milestone 7) will listen to it
+
+var invincible_timer := 0.0
 
 var air_jumps_left := 0
 var shield_down := false # true while airborne + holding S/↓. The shield reads this.
@@ -91,13 +100,23 @@ func _physics_process(delta: float) -> void:
 			pogo()
 			if target.has_method("hit"):
 				target.hit()
+				GameState.add_mana(pogo_kill_mana) # the core loop: fight in the air to refuel
 
 	# 8. Let Godot move us and resolve collisions (also updates is_on_floor()).
 	move_and_slide()
 
-	# 9. Throw the shield the way we face. The shield refuses if it's already flying.
-	if Input.is_action_just_pressed("throw"):
-		shield.throw(facing)
+	# 9. Throw the shield the way we face, if it's in hand AND we can pay the mana.
+	#    (Order matters: check the hand first, or we'd pay for a throw that can't happen.)
+	if Input.is_action_just_pressed("throw") and not shield.is_flying():
+		if GameState.spend_mana(throw_cost):
+			shield.throw(facing)
+
+	# 10. Invincibility after a hit: count down and flicker (visible on/off ~10×/s).
+	if invincible_timer > 0.0:
+		invincible_timer -= delta
+		$Body.visible = int(invincible_timer * 20.0) % 2 == 0
+	else:
+		$Body.visible = true
 
 	# Fell into a pit.
 	if position.y > 600.0:
@@ -111,8 +130,26 @@ func pogo() -> void:
 	air_jumps_left = air_jumps
 
 
-## Back to the start. (Health and checkpoints come in milestones 6–7.)
+## Called by enemies, bullets and spikes when they touch our body.
+## `from` = where the hit came from, so we get knocked AWAY from it.
+func take_hit(from: Vector2) -> void:
+	if invincible_timer > 0.0:
+		return # still flickering from the last hit: ignore
+	hurt.emit()
+	if GameState.take_damage(1):
+		die()
+		return
+	invincible_timer = invincible_time
+	var away := signf(global_position.x - from.x)
+	if away == 0.0:
+		away = -facing
+	velocity = Vector2(away * knockback.x, knockback.y)
+
+
+## Back to the start with full health and mana; gold is kept. (Checkpoints: milestone 7.)
 func die() -> void:
 	position = spawn_point
 	velocity = Vector2.ZERO
+	invincible_timer = 0.0
+	GameState.refill()
 	died.emit()

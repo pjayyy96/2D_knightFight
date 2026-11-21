@@ -1,16 +1,21 @@
 extends SceneTree
-## Self-check for enemies vs. shield, with real physics.
+## Self-check for enemies vs. shield, plus health / mana / gold, with real physics.
 ## Run from the project folder:
 ##   godot --headless --path . --script tests/test_enemies.gd
 
-const PlayerScene = preload("res://scenes/player.tscn")
-const WalkerScene = preload("res://scenes/enemy_walker.tscn")
-const BulletScene = preload("res://scenes/bullet.tscn")
-const PlatformScript = preload("res://scripts/platform.gd")
+## Note: scenes are `load()`ed at runtime, not `preload`ed, and GameState is reached as `gs`.
+## A test run with --script is compiled BEFORE autoloads exist, so any script that names
+## `GameState` must not be compiled until the test is already running.
+var PlayerScene: PackedScene
+var WalkerScene: PackedScene
+var BulletScene: PackedScene
+var PlatformScript: Script
+var gs: Node # the GameState autoload
 
 var failures := 0
 var level: Node2D
 var player
+var hurts := 0
 var deaths := 0
 
 
@@ -21,42 +26,76 @@ func check(ok: bool, what: String) -> void:
 
 
 func _initialize() -> void:
-	# 1. Thrown shield kills a walker.
+	await process_frame
+	gs = root.get_node("GameState")
+	PlayerScene = load("res://scenes/player.tscn")
+	WalkerScene = load("res://scenes/enemy_walker.tscn")
+	BulletScene = load("res://scenes/bullet.tscn")
+	PlatformScript = load("res://scripts/platform.gd")
+
+	# 1. Thrown shield kills a walker; the throw costs mana, the kill pays gold.
 	await setup_level(true)
 	var walker := spawn(WalkerScene, Vector2(60, 0))
-	player.shield.throw(1.0)
+	Input.action_press("throw")
+	await frames(2) # physics_frame fires BEFORE nodes process, so give the player a full frame
+	Input.action_release("throw")
+	check(gs.mana == gs.MAX_MANA - 1, "throw costs 1 mana (mana=%d)" % gs.mana)
 	await frames(40)
 	check(not is_instance_valid(walker), "thrown shield kills walker")
-	check(deaths == 0, "player safe while killing walker")
+	check(gs.gold == 1, "walker pays 1 gold")
+	check(hurts == 0, "player safe while killing walker")
 
-	# 2. Held shield (facing the bullet) blocks it.
+	# 2. No mana: J does nothing.
+	await setup_level(true)
+	gs.mana = 0
+	Input.action_press("throw")
+	await frames(2)
+	Input.action_release("throw")
+	check(not player.shield.is_flying(), "can't throw with 0 mana")
+
+	# 3. Held shield (facing the bullet) blocks it.
 	await setup_level(true)
 	var bullet := spawn(BulletScene, Vector2(80, 0)) # flies left, toward the player
 	await frames(60)
 	check(not is_instance_valid(bullet), "held shield blocks bullet")
-	check(deaths == 0, "blocked bullet doesn't kill")
+	check(hurts == 0, "blocked bullet doesn't hurt")
+	check(gs.gold == 0, "bullets pay no gold")
 
-	# 3. No shield in hand: the bullet hits the body.
+	# 4. No shield in hand: two bullets close together = ONE hit (invincibility frames).
 	await setup_level(true)
-	player.shield.throw(-1.0) # throw it away from the bullet
+	player.shield.throw(-1.0) # throw it away from the bullets
 	spawn(BulletScene, Vector2(80, 0))
+	spawn(BulletScene, Vector2(100, 0))
 	await frames(60)
-	check(deaths > 0, "unshielded player dies to bullet")
+	check(hurts == 1, "second bullet ignored while flickering (got %d hits)" % hurts)
+	check(gs.hp == gs.MAX_HP - 1, "lost exactly 1 HP")
 
-	# 4. Pogo on a walker: bounce, walker dies, player survives.
+	# 5. Out of HP: die, respawn with full HP and mana, keep gold.
+	await setup_level(true)
+	gs.hp = 1
+	gs.mana = 0
+	gs.gold = 7
+	player.take_hit(Vector2(50, 0))
+	check(deaths == 1, "last HP lost = death")
+	check(gs.hp == gs.MAX_HP and gs.mana == gs.MAX_MANA, "respawn refills")
+	check(gs.gold == 7, "gold kept after death")
+
+	# 6. Pogo on a walker: bounce, walker dies, mana comes back, player unhurt.
 	await setup_level(false) # no floor: the player falls onto the walker
+	gs.mana = 0
 	walker = spawn(WalkerScene, Vector2(0, 80))
 	Input.action_press("shield_down")
 	await frames(60)
 	Input.action_release("shield_down")
 	check(not is_instance_valid(walker), "pogo kills walker")
-	check(deaths == 0, "pogo on walker doesn't kill player")
+	check(gs.mana == 1, "pogo kill refills 1 mana")
+	check(hurts == 0, "pogo on walker doesn't hurt")
 
 	print("enemy tests: ", "OK" if failures == 0 else "FAILED (%d)" % failures)
 	quit(failures)
 
 
-## Fresh level each time: player at (0, 0), optionally standing on a floor.
+## Fresh level each time: player at (0, 0), optionally standing on a floor. Fresh stats too.
 func setup_level(with_floor: bool) -> void:
 	if level:
 		level.queue_free()
@@ -71,7 +110,11 @@ func setup_level(with_floor: bool) -> void:
 		level.add_child(floor_block)
 	player = PlayerScene.instantiate()
 	level.add_child(player)
+	gs.refill()
+	gs.gold = 0
+	hurts = 0
 	deaths = 0
+	player.hurt.connect(func(): hurts += 1)
 	player.died.connect(func(): deaths += 1)
 	await frames(2) # let _ready() run and the player settle
 
