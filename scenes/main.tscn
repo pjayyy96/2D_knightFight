@@ -1,0 +1,45 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1"]
+[ext_resource type="Script" path="res://scripts/platform.gd" id="2"]
+
+[node name="Main" type="Node2D"]
+
+[node name="Ground" type="StaticBody2D" parent="."]
+position = Vector2(0, 100)
+script = ExtResource("2")
+size = Vector2(800, 32)
+
+[node name="GroundAfterPit" type="StaticBody2D" parent="."]
+position = Vector2(580, 100)
+script = ExtResource("2")
+size = Vector2(280, 32)
+
+[node name="LeftWall" type="StaticBody2D" parent="."]
+position = Vector2(-410, 0)
+script = ExtResource("2")
+size = Vector2(20, 232)
+
+[node name="LowPlatform" type="StaticBody2D" parent="."]
+position = Vector2(140, 40)
+script = ExtResource("2")
+size = Vector2(96, 12)
+
+[node name="HighPlatform" type="StaticBody2D" parent="."]
+position = Vector2(250, -20)
+script = ExtResource("2")
+size = Vector2(64, 12)
+
+[node name="SkyLedge" type="StaticBody2D" parent="."]
+position = Vector2(150, -100)
+script = ExtResource("2")
+size = Vector2(72, 12)
+color = Color(0.55, 0.45, 0.25, 1)
+
+[node name="LeftPlatform" type="StaticBody2D" parent="."]
+position = Vector2(-220, 30)
+script = ExtResource("2")
+size = Vector2(80, 12)
+
+[node name="Player" parent="." instance=ExtResource("1")]
+position = Vector2(0, 60)
