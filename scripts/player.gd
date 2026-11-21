@@ -22,10 +22,14 @@ var air_jumps_left := 0
 var coyote_timer := 0.0
 var buffer_timer := 0.0
 var spawn_point := Vector2.ZERO
+var facing := 1.0 # 1 = right, -1 = left. The shield reads this.
+
+@onready var shield := $Shield # `@onready` = look the child up once the scene is ready
 
 
 func _ready() -> void:
 	spawn_point = position
+	shield.player = self # the shield needs to know who to follow and fly back to
 
 
 func _physics_process(delta: float) -> void:
@@ -67,12 +71,17 @@ func _physics_process(delta: float) -> void:
 	# 6. Horizontal: ease toward target speed instead of snapping to it.
 	var dir := Input.get_axis("move_left", "move_right") # -1, 0 or 1
 	if dir != 0.0:
+		facing = signf(dir)
 		velocity.x = move_toward(velocity.x, dir * run_speed, acceleration * delta)
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, friction * delta)
 
 	# 7. Let Godot move us and resolve collisions (also updates is_on_floor()).
 	move_and_slide()
+
+	# 8. Throw the shield the way we face. The shield refuses if it's already flying.
+	if Input.is_action_just_pressed("throw"):
+		shield.throw(facing)
 
 	# Fell into a pit -> back to start. (Real death/checkpoints come in milestone 7.)
 	if position.y > 600.0:

@@ -56,3 +56,34 @@ Controls: **A/D or ←/→** move · **Space / W / ↑** jump · **J** throw shi
 - Set `air_jumps` to 2 (triple jump) or 0 (no double jump), and try reaching SkyLedge.
 - Walk off a ledge, wait about half a second, and jump twice. Count the jumps you get.
 - Move SkyLedge higher, to y = -130, and work out with the formula whether it's still reachable.
+
+---
+
+## Milestone 3 — Boomerang shield (press **J**)
+
+**Read**
+1. `scripts/shield.gd`: the diagram at the top, then `_physics_process`. Each `State` branch
+   only knows how to move and when to switch to the next state.
+2. `scripts/player.gd`: `facing` (set while running), `@onready var shield`, and step 8 (throw).
+3. `scenes/player.tscn`: the shield is a child of the player, but with `top_level = true`
+   (in `shield.tscn`), so it moves in world space once thrown.
+4. `tests/test_shield.gd`: an automatic check that steps the shield frame by frame.
+
+**Key ideas**
+- **State machine.** Rather than a pile of `if thrown and not returning and ...` flags, there is
+  one `state` variable with exactly three values. Bugs like "flying and held at the same time"
+  become impossible. Enemies and bosses later use the same pattern.
+- **Homing return.** On the way back the shield aims at where the player is *now*, every frame
+  (`move_toward`). Run away and it chases you. It also ignores walls, so it can't get stuck.
+- **Area2D vs bodies.** The shield is an `Area2D`: it detects overlaps (walls now, enemies in
+  milestone 5) but never pushes anything.
+- **Tests.** Run the check yourself (in Git Bash, from the project folder):
+  `"<path to Godot>_console.exe" --headless --path . --script tests/test_shield.gd`
+  It prints `shield tests: OK`.
+
+**Try this**
+- In `shield.tscn` (select the Shield node): set `max_distance` to 300, or `return_speed` to 200.
+  With a slow return, run away from it.
+- Throw it at the *LeftWall* from close up. It bounces back early.
+- Break the test on purpose: change `return_speed` to 0 and run the test. Read the FAIL lines,
+  then put it back.
