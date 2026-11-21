@@ -1,0 +1,47 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1"]
+[ext_resource type="Script" path="res://scripts/platform.gd" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/boss.tscn" id="3"]
+[ext_resource type="Script" path="res://scripts/hud.gd" id="4"]
+
+[node name="BossArena" type="Node2D"]
+
+[node name="Floor" type="StaticBody2D" parent="."]
+position = Vector2(0, 116)
+script = ExtResource("2")
+size = Vector2(600, 32)
+
+[node name="LeftWall" type="StaticBody2D" parent="."]
+position = Vector2(-290, 0)
+script = ExtResource("2")
+size = Vector2(20, 240)
+
+[node name="RightWall" type="StaticBody2D" parent="."]
+position = Vector2(290, 0)
+script = ExtResource("2")
+size = Vector2(20, 240)
+
+[node name="Boss" parent="." instance=ExtResource("3")]
+position = Vector2(200, 84)
+
+[node name="Player" parent="." instance=ExtResource("1")]
+position = Vector2(-200, 88)
+
+[node name="Camera2D" parent="Player" index="2"]
+limit_left = -320
+limit_top = -200
+limit_right = 320
+limit_bottom = 160
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource("4")
+
+[node name="Label" type="Label" parent="HUD"]
+offset_left = 8.0
+offset_top = 6.0
+offset_right = 400.0
+offset_bottom = 26.0
+theme_override_font_sizes/font_size = 12
+
+[editable path="Player"]
