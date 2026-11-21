@@ -123,10 +123,7 @@ func _physics_process(delta: float) -> void:
 	if shield_down and velocity.y > 0.0:
 		var target: Area2D = shield.pogo_target()
 		if target:
-			pogo()
-			if target.has_method("hit"):
-				target.hit()
-				GameState.add_mana(pogo_kill_mana) # the core loop: fight in the air to refuel
+			bounce_on(target)
 
 	# 8. Let Godot move us and resolve collisions (also updates is_on_floor()).
 	move_and_slide()
@@ -149,7 +146,18 @@ func _physics_process(delta: float) -> void:
 		die()
 
 
-## Called by the shield when it lands on something bounceable.
+## Bounce off `target` and hit it. Used by BOTH ways of landing on things:
+##  - pogo (shield held down, step 7), and
+##  - stomp (landing on an enemy's head with your body; enemy.gd calls this).
+## Enemies die (a boss loses 1 HP), bullets pop, spikes just bounce you (they have no hit()).
+func bounce_on(target: Node) -> void:
+	pogo()
+	if target.has_method("hit"):
+		target.hit()
+		GameState.add_mana(pogo_kill_mana) # the core loop: fight in the air to refuel
+
+
+## The bounce itself.
 ## The bounce also gives back the air jumps, so you can chain: bounce → double jump → bounce...
 func pogo() -> void:
 	velocity.y = pogo_velocity

@@ -91,6 +91,26 @@ func _initialize() -> void:
 	check(gs.mana == 1, "pogo kill refills 1 mana")
 	check(hurts == 0, "pogo on walker doesn't hurt")
 
+	# 7. Stomp: land on a walker with NO shield down. It dies, you bounce, mana comes back.
+	await setup_level(false)
+	gs.mana = 0
+	walker = spawn(WalkerScene, Vector2(0, 80))
+	var bounced := false
+	for i in 60:
+		await physics_frame
+		bounced = bounced or player.velocity.y < 0.0
+	check(not is_instance_valid(walker), "stomp kills walker")
+	check(bounced, "stomp bounces you up")
+	check(gs.mana == 1, "stomp refills 1 mana")
+	check(hurts == 0, "stomp doesn't hurt")
+
+	# 8. Side contact still hurts: a walker walks into a standing player.
+	await setup_level(true)
+	walker = spawn(WalkerScene, Vector2(40, 6)) # on the floor (top y=12), walking left at us
+	await frames(60)
+	check(hurts >= 1, "walker touching you from the side hurts")
+	check(is_instance_valid(walker), "side contact doesn't kill the walker")
+
 	print("enemy tests: ", "OK" if failures == 0 else "FAILED (%d)" % failures)
 	quit(failures)
 

@@ -92,6 +92,27 @@ func _initialize() -> void:
 	check(boss.direction == 1.0, "turned around at the left wall")
 	check(spawned.size() >= 3, "fired a volley (%d bullets)" % spawned.size())
 
+	# 6. Stomp: drop the player onto the boss's head (no shield). Boss loses 1 HP, player
+	#    bounces unhurt, and the HP bar SLIDES down instead of jumping.
+	await new_level()
+	boss = spawn_boss(Vector2(0, -4)) # top of the boss at y = -20
+	player = PlayerScene.instantiate()
+	player.position = Vector2(0, -80)
+	level.add_child(player)
+	var hurts := [0]
+	player.hurt.connect(func(): hurts[0] += 1)
+	var bar_mid := -1.0
+	for i in 40:
+		await physics_frame
+		if bar_mid < 0.0 and boss.hp < boss.max_hp:
+			await physics_frame # one frame after the stomp: the bar should be partway
+			bar_mid = boss.hp_bar.value
+	check(boss.hp == boss.max_hp - 1, "stomp takes 1 HP (hp=%d)" % boss.hp)
+	check(hurts[0] == 0, "stomping the boss doesn't hurt you")
+	check(bar_mid > boss.hp, "HP bar slides down, not instant (was %.2f right after)" % bar_mid)
+	await frames(30)
+	check(is_equal_approx(boss.hp_bar.value, boss.hp), "HP bar ends at the new HP")
+
 	print("boss tests: ", "OK" if failures == 0 else "FAILED (%d)" % failures)
 	quit(failures)
 

@@ -118,13 +118,15 @@ func _fire() -> void:
 ## A whole throw takes 140/360 + 140/420 = 0.72 s (out, then back), so the two passes are
 ## always less than 0.72 s apart, and 0.75 s turns one throw into one hit. (The first version
 ## used 0.6 s and test_boss.gd caught a close-range throw hitting twice.)
-## The price: a pogo bounce comes back down after ~0.67 s, so if you pogo on the same spot,
-## only every second bounce counts. You still bounce and still get mana.
+## The price: a pogo bounce (or a stomp on its head) comes back down after ~0.67 s, so on the
+## same spot only every second bounce counts. You still bounce and still get mana.
 func hit() -> void:
 	if _cooldown > 0.0 or is_queued_for_deletion():
 		return
 	hp -= 1
-	hp_bar.value = hp
+	# A Tween animates a property over time: the bar SLIDES down to the new value in 0.4 s
+	# instead of jumping, so the player sees how much that hit took off.
+	create_tween().tween_property(hp_bar, "value", float(hp), 0.4)
 	_cooldown = hit_cooldown
 	if hp <= 0:
 		defeated.emit() # tell listeners BEFORE we're gone

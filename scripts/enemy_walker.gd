@@ -14,7 +14,9 @@ var direction := -1.0 # -1 = left, 1 = right
 
 func _physics_process(delta: float) -> void:
 	_aim_rays()
-	if wall_ray.is_colliding() or not floor_ray.is_colliding():
+	# Only real walls (StaticBody2D) turn us. The ray also sees the player's body, and
+	# turning away from the player would make walkers harmless from the side.
+	if wall_ray.get_collider() is StaticBody2D or not floor_ray.is_colliding():
 		direction = -direction
 		# Re-aim right away. Otherwise next frame still reads the OLD side's answer,
 		# turns again, and the walker gets stuck jittering at the ledge.

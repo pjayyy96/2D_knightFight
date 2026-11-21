@@ -19,9 +19,11 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 
 
-# Override: hurt the player like any enemy, but ALSO vanish on walls.
+# Override: always hurt the player's body (no stomping bullets; only the SHIELD can pogo
+# them), and vanish on whatever we touched, walls included.
 func _on_body_entered(body: Node2D) -> void:
-	super(body)
+	if body.has_method("take_hit"):
+		body.take_hit(global_position)
 	hit()
 
 

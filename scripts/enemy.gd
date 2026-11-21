@@ -21,8 +21,19 @@ func _ready() -> void:
 # shortcut: hurts only on *entering*; overlapping a walker after the flicker ends is safe.
 # Rare (knockback separates you) — switch to a per-frame check like spikes.gd if it shows up.
 func _on_body_entered(body: Node2D) -> void:
-	if body.has_method("take_hit"):
-		body.take_hit(global_position)
+	if not body.has_method("take_hit"):
+		return # a wall or floor, not the player
+	if _is_stomp(body):
+		body.bounce_on(self) # landed on our head: WE get hit, the player bounces
+	else:
+		body.take_hit(global_position) # ran into us: the player gets hurt
+
+
+## A stomp = the player is FALLING and their center is above ours, i.e. they came down
+## on top of us. From the side the centers are level (or the player is lower), so it hurts.
+## Standing on the floor, velocity.y is 0, so walking into an enemy is never a stomp.
+func _is_stomp(body: Node2D) -> bool:
+	return body.velocity.y > 0.0 and body.global_position.y < global_position.y
 
 
 func _on_area_entered(area: Area2D) -> void:

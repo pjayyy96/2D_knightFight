@@ -357,3 +357,41 @@ next level open. Progress and gold are saved, so they're still there after you q
 - Gold is saved only when you finish a level. Quit mid-level and that level's gold is lost.
 - Running a level directly with F6 skips the save (gold starts at 0). That's handy for testing.
 - During the 1.5 s win pause the game keeps running. You can still get hit, but the win is already saved.
+
+---
+
+## Milestone 11 — Stomp
+
+Jump on an enemy's **head** (no shield needed): it dies, you bounce, and you get +1 mana, just
+like a pogo. Walking into an enemy from the side still hurts. Bullets always hurt your body
+(only the *shield* can pogo them). The **boss** loses 1 HP per stomp, and its HP bar now
+**slides** down instead of jumping.
+
+**Read**
+1. `scripts/enemy.gd`: `_on_body_entered()` and `_is_stomp()`. Every enemy decides "stomped or
+   rammed?" in one place, so walker, shooter and boss all got stomping at once.
+2. `scripts/player.gd`: `bounce_on()`, shared by the pogo (step 7) and the stomp.
+3. `scripts/bullet.gd`: overrides `_on_body_entered()` so bullets *can't* be stomped.
+4. `scripts/boss.gd` `hit()`: `create_tween()` slides the bar.
+5. `scripts/enemy_walker.gd`: the wall-feeler now ignores the player (see below).
+
+**Key ideas**
+- **Top vs side, with two numbers.** A stomp = the player is *falling* (`velocity.y > 0`) and their
+  center is *above* the enemy's. Standing on the floor, `velocity.y` is 0, so walking into an enemy
+  is never a stomp.
+- **One function, two features.** Pogo and stomp both call `bounce_on(target)`. A change to
+  "what happens when you bounce" (sound, effects) now lands in both automatically.
+- **Tweens** animate a value over time: `tween_property(hp_bar, "value", hp, 0.4)` means
+  "slide the bar to hp in 0.4 s". The same tool works for fades, flashes and moving platforms.
+- **New tests find old bugs.** The "side contact hurts" test failed at first: the walker's
+  wall-feeler also saw the *player* and turned away before touching you. Walkers had been
+  harmless from the side since milestone 5. Now only real walls (`StaticBody2D`) turn them,
+  same as the boss.
+
+**Try this**
+- Stomp the Walker, then the Shooter. Then try stomping a bullet (ouch).
+- Stomp the boss 6 times. Watch the bar slide, and notice every second quick bounce is
+  ignored (the hit cooldown from milestone 9).
+- In `boss.gd`, change the tween time `0.4` to `2.0` for a slow, dramatic bar.
+- In `enemy.gd` `_is_stomp()`, remove `body.velocity.y > 0.0 and`. Then jump *up* into an enemy
+  from below. Why does that now count as a stomp, and why is that wrong?
