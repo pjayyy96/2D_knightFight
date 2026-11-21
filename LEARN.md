@@ -362,8 +362,9 @@ next level open. Progress and gold are saved, so they're still there after you q
 
 ## Milestone 11 — Stomp
 
-Jump on an enemy's **head** (no shield needed): it dies, you bounce, and you get +1 mana, just
-like a pogo. Walking into an enemy from the side still hurts. Bullets always hurt your body
+Jump on an enemy's **head** (no shield needed): it dies and you bounce, but you get **no mana**.
+Only the shield pogo refuels you, so stomping is the easy move and the pogo is the skilled
+one that pays. Walking into an enemy from the side still hurts. Bullets always hurt your body
 (only the *shield* can pogo them). The **boss** loses 1 HP per stomp, and its HP bar now
 **slides** down instead of jumping.
 
@@ -379,7 +380,9 @@ like a pogo. Walking into an enemy from the side still hurts. Bullets always hur
 - **Top vs side, with two numbers.** A stomp = the player is *falling* (`velocity.y > 0`) and their
   center is *above* the enemy's. Standing on the floor, `velocity.y` is 0, so walking into an enemy
   is never a stomp.
-- **One function, two features.** Pogo and stomp both call `bounce_on(target)`. A change to
+- **One function, two features.** Pogo and stomp both call `bounce_on(target)`; the stomp passes
+  `give_mana = false`. A default parameter (`give_mana := true`) lets one caller opt out
+  without touching the others. A change to
   "what happens when you bounce" (sound, effects) now lands in both automatically.
 - **Tweens** animate a value over time: `tween_property(hp_bar, "value", hp, 0.4)` means
   "slide the bar to hp in 0.4 s". The same tool works for fades, flashes and moving platforms.
@@ -389,7 +392,8 @@ like a pogo. Walking into an enemy from the side still hurts. Bullets always hur
   same as the boss.
 
 **Try this**
-- Stomp the Walker, then the Shooter. Then try stomping a bullet (ouch).
+- Stomp the Walker, then the Shooter, and watch MANA stay put. Pogo the next one: +1.
+  Then try stomping a bullet (ouch).
 - Stomp the boss 6 times. Watch the bar slide, and notice every second quick bounce is
   ignored (the hit cooldown from milestone 9).
 - In `boss.gd`, change the tween time `0.4` to `2.0` for a slow, dramatic bar.

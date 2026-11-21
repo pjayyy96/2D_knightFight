@@ -148,13 +148,15 @@ func _physics_process(delta: float) -> void:
 
 ## Bounce off `target` and hit it. Used by BOTH ways of landing on things:
 ##  - pogo (shield held down, step 7), and
-##  - stomp (landing on an enemy's head with your body; enemy.gd calls this).
+##  - stomp (landing on an enemy's head with your body; enemy.gd calls this with give_mana=false).
 ## Enemies die (a boss loses 1 HP), bullets pop, spikes just bounce you (they have no hit()).
-func bounce_on(target: Node) -> void:
+## Only the SHIELD pogo refuels: stomping is the easy move, the pogo is the skilled one that pays.
+func bounce_on(target: Node, give_mana := true) -> void:
 	pogo()
 	if target.has_method("hit"):
 		target.hit()
-		GameState.add_mana(pogo_kill_mana) # the core loop: fight in the air to refuel
+		if give_mana:
+			GameState.add_mana(pogo_kill_mana) # the core loop: fight in the air to refuel
 
 
 ## The bounce itself.

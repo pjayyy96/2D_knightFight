@@ -24,7 +24,7 @@ func _on_body_entered(body: Node2D) -> void:
 	if not body.has_method("take_hit"):
 		return # a wall or floor, not the player
 	if _is_stomp(body):
-		body.bounce_on(self) # landed on our head: WE get hit, the player bounces
+		body.bounce_on(self, false) # landed on our head: WE get hit, the player bounces (no mana)
 	else:
 		body.take_hit(global_position) # ran into us: the player gets hurt
 
