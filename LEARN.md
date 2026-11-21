@@ -3,7 +3,7 @@
 An original 2D platformer in Godot 4. Each milestone adds one mechanic. Read the
 files listed, run the game (F5), then try the tweaks.
 
-Controls: **A/D or ←/→** move · **Space / W / ↑** jump · **J** throw shield (milestone 3) · **S / ↓** shield down (milestone 4)
+Controls: **A/D or ←/→** move · **Space / W / ↑** jump · **J** throw shield (milestone 3) · **S / ↓** shield down (milestone 4) · **K** hold to heal (milestone 12)
 
 ---
 
@@ -399,3 +399,40 @@ one that pays. Walking into an enemy from the side still hurts. Bullets always h
 - In `boss.gd`, change the tween time `0.4` to `2.0` for a slow, dramatic bar.
 - In `enemy.gd` `_is_stomp()`, remove `body.velocity.y > 0.0 and`. Then jump *up* into an enemy
   from below. Why does that now count as a stomp, and why is that wrong?
+
+---
+
+## Milestone 12 — Heal (hold **K**)
+
+Stand still on the ground and **hold K**. Your knight slowly turns green; after 0.8 s you get
+**+1 HP for 2 mana**. Keep holding to heal again. Move, jump, let go, or get hit, and the charge
+starts over. It does nothing at full HP or with less than 2 mana (so it never wastes mana).
+
+**Read**
+1. `scripts/player.gd` step **9b**: the whole move is one `if` with a timer.
+2. `scripts/player.gd` `take_hit()`: one line, `heal_timer = 0.0`, makes hits cancel a heal.
+3. `scripts/game_state.gd` `heal()`: the same "never past the max" pattern as `add_mana()`.
+4. `tests/test_heal.gd`: seven cases, one per rule above.
+
+**Key ideas**
+- **Mana is now a choice.** Before, mana only meant "throws left". Now 2 mana = 2 throws *or*
+  1 HP. Do you attack, or save up to survive? That one decision makes the resource interesting,
+  and it's also why pogo kills (the only refill) matter even more.
+- **A charge time is a price you pay in danger, not in mana.** For 0.8 s you can't move or fight.
+  Heal next to an enemy and it interrupts you. So players learn to clear an area first, then heal.
+- **Hold-to-charge = a timer that resets.** `heal_timer += delta` while *every* condition holds,
+  `heal_timer = 0.0` the moment *any* breaks. You'll see this pattern for charged attacks, bows,
+  and "hold to open" doors.
+- **`lerp` shows hidden state.** `body_color.lerp(heal_color, heal_timer / heal_time)` blends
+  from blue (0.0) to green (1.0). The timer is invisible; the color tells the player "almost there".
+- **`can_heal` checks the mana *before* charging.** Otherwise you'd sit green for 0.8 s and then
+  get nothing. Check early, so the player never pays (in time) for something that can't happen.
+  Same rule as the throw in step 9: check the hand first, then pay.
+
+**Try this**
+- Take a hit from the Shooter, walk away from it, and heal. Then try healing right next to it.
+- In the Inspector (select Player in `main.tscn`), set **Heal Time** to `0.3`. Too easy? Set **Heal
+  Cost** to `1`. Which change makes the game easiest, and which one breaks the "mana is a choice" idea?
+- Remove `dir == 0.0 and` from `can_heal`. Now you can heal while running. Why does that make the
+  charge time almost pointless?
+- Give the heal its own sound or particle burst at the moment `GameState.heal(1)` runs.

@@ -64,6 +64,12 @@ func take_damage(amount: int) -> bool:
 	return hp == 0
 
 
+## Get health back (the heal move, milestone 12). Same "never past the max" rule as add_mana.
+func heal(amount: int) -> void:
+	hp = mini(hp + amount, MAX_HP)
+	changed.emit()
+
+
 ## Full health and mana (on respawn). Gold is kept, as a reward for progress.
 func refill() -> void:
 	hp = MAX_HP

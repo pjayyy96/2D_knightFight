@@ -24,6 +24,9 @@ extends CharacterBody2D
 @export var pogo_kill_mana := 1      # mana back for each enemy you pogo
 @export var invincible_time := 1.0   # seconds of safety after a hit (you flicker)
 @export var knockback := Vector2(160, -220) # pushed away and up when hit
+@export var heal_cost := 2           # mana per heal (two throws' worth: healing is a real choice)
+@export var heal_time := 0.8         # seconds K must be held, standing still, for +1 HP
+@export var heal_color := Color(0.35, 0.95, 0.5) # the body fades to this while charging
 
 @export_group("Sliding")
 @export var slide_speed := 280.0     # top speed riding the shield down a slope (2× running)
@@ -34,6 +37,7 @@ signal hurt # emitted by take_hit() when it actually hurts
 signal died # emitted by die(); checkpoints (milestone 7) will listen to it
 
 var invincible_timer := 0.0
+var heal_timer := 0.0 # how long the current heal has been charging (0 = not charging)
 
 var air_jumps_left := 0
 var shield_down := false # true while airborne + holding S/↓ (or sliding). The shield reads this.
@@ -44,6 +48,7 @@ var spawn_point := Vector2.ZERO
 var facing := 1.0 # 1 = right, -1 = left. The shield reads this.
 
 @onready var shield := $Shield # `@onready` = look the child up once the scene is ready
+@onready var body_color: Color = $Body.color # the normal color, to fade back to after healing
 
 
 func _ready() -> void:
@@ -134,6 +139,23 @@ func _physics_process(delta: float) -> void:
 		if GameState.spend_mana(throw_cost):
 			shield.throw(facing)
 
+	# 9b. Heal: hold K, standing still on the ground, with HP to gain and mana to pay.
+	#     The charge is the price: for heal_time you can't move, jump or attack, so you
+	#     heal in a quiet moment, not in the middle of a fight. Break ANY condition (move,
+	#     jump, let go of K, get hit) and the charge starts over from zero.
+	#     Keep holding and it heals again every heal_time, until HP is full or mana runs out.
+	var can_heal := is_on_floor() and dir == 0.0 and not sliding 			and GameState.hp < GameState.MAX_HP and GameState.mana >= heal_cost
+	if can_heal and Input.is_action_pressed("heal"):
+		heal_timer += delta
+		if heal_timer >= heal_time:
+			heal_timer = 0.0
+			GameState.spend_mana(heal_cost) # can't fail: can_heal checked the mana
+			GameState.heal(1)
+	else:
+		heal_timer = 0.0
+	# lerp = "blend": 0 → normal color, 1 → fully green. The player SEES the charge build up.
+	$Body.color = body_color.lerp(heal_color, heal_timer / heal_time)
+
 	# 10. Invincibility after a hit: count down and flicker (visible on/off ~10×/s).
 	if invincible_timer > 0.0:
 		invincible_timer -= delta
@@ -172,6 +194,7 @@ func take_hit(from: Vector2) -> void:
 	if invincible_timer > 0.0:
 		return # still flickering from the last hit: ignore
 	hurt.emit()
+	heal_timer = 0.0 # a hit interrupts a heal
 	if GameState.take_damage(1):
 		die()
 		return
