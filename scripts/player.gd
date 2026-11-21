@@ -25,13 +25,19 @@ extends CharacterBody2D
 @export var invincible_time := 1.0   # seconds of safety after a hit (you flicker)
 @export var knockback := Vector2(160, -220) # pushed away and up when hit
 
+@export_group("Sliding")
+@export var slide_speed := 280.0     # top speed riding the shield down a slope (2× running)
+@export var slide_accel := 600.0     # how fast a slide picks up speed
+@export var momentum_drag := 150.0   # how slowly leftover slide speed fades (lower = longer jumps)
+
 signal hurt # emitted by take_hit() when it actually hurts
 signal died # emitted by die(); checkpoints (milestone 7) will listen to it
 
 var invincible_timer := 0.0
 
 var air_jumps_left := 0
-var shield_down := false # true while airborne + holding S/↓. The shield reads this.
+var shield_down := false # true while airborne + holding S/↓ (or sliding). The shield reads this.
+var sliding := false     # on a slope + holding S/↓
 var coyote_timer := 0.0
 var buffer_timer := 0.0
 var spawn_point := Vector2.ZERO
@@ -44,6 +50,10 @@ func _ready() -> void:
 	add_to_group("player") # so checkpoints can recognise us
 	spawn_point = global_position # checkpoints overwrite this
 	shield.player = self # the shield needs to know who to follow and fly back to
+	# Going DOWN a slope fast, we'd move sideways faster than gravity pulls us down and
+	# "fly off" the surface every frame. Snapping pulls us back onto the floor if it's
+	# within 6 px. (Not while jumping: Godot never snaps when velocity points up.)
+	floor_snap_length = 6.0
 
 
 func _physics_process(delta: float) -> void:
@@ -82,9 +92,23 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_released("jump") and velocity.y < 0.0:
 		velocity.y *= jump_cut
 
-	# 6. Horizontal: ease toward target speed instead of snapping to it.
+	# 6. Horizontal movement: slide, coast, or run.
 	var dir := Input.get_axis("move_left", "move_right") # -1, 0 or 1
-	if dir != 0.0:
+	# The floor normal is the arrow pointing straight out of the ground. On flat ground it's
+	# (0, -1). On a slope it leans toward the DOWNHILL side, so its x tells us which way that is.
+	var normal := get_floor_normal()
+	sliding = is_on_floor() and absf(normal.x) > 0.1 and Input.is_action_pressed("shield_down")
+	if sliding:
+		# 6a. Ride the shield downhill, speeding up to slide_speed. Left/right are ignored.
+		var downhill := signf(normal.x)
+		facing = downhill
+		velocity.x = move_toward(velocity.x, downhill * slide_speed, slide_accel * delta)
+	elif absf(velocity.x) > run_speed and signf(velocity.x) != -dir:
+		# 6b. Faster than we can run (leftover slide speed) and not braking: keep it,
+		#     fading only slowly. Jump now and that speed becomes a long jump.
+		velocity.x = move_toward(velocity.x, signf(velocity.x) * run_speed, momentum_drag * delta)
+	elif dir != 0.0:
+		# 6c. Normal running: ease toward target speed instead of snapping to it.
 		facing = signf(dir)
 		velocity.x = move_toward(velocity.x, dir * run_speed, acceleration * delta)
 	else:
@@ -94,7 +118,8 @@ func _physics_process(delta: float) -> void:
 	#    Bouncing now (before this frame's move) means the body never gets there.
 	#    Only while falling, otherwise rising out of a bounce would re-trigger it.
 	#    Whatever we bounced on gets hit too (enemies die, bullets pop; spikes have no hit()).
-	shield_down = not is_on_floor() and Input.is_action_pressed("shield_down")
+	#    Sliding counts as shield-down too, so you can slide over spikes and enemies.
+	shield_down = (not is_on_floor() and Input.is_action_pressed("shield_down")) or sliding
 	if shield_down and velocity.y > 0.0:
 		var target: Area2D = shield.pogo_target()
 		if target:

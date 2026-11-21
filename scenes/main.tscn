@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1"]
 [ext_resource type="Script" path="res://scripts/platform.gd" id="2"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/enemy_shooter.tscn" id="5"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="6"]
 [ext_resource type="PackedScene" path="res://scenes/checkpoint.tscn" id="7"]
+[ext_resource type="Script" path="res://scripts/slope.gd" id="8"]
 
 [node name="Main" type="Node2D"]
 
@@ -55,6 +56,31 @@ width = 160.0
 position = Vector2(580, 78)
 script = ExtResource("3")
 width = 200.0
+
+[node name="Plateau" type="StaticBody2D" parent="."]
+position = Vector2(760, 54)
+script = ExtResource("2")
+size = Vector2(80, 60)
+
+[node name="Hill" type="StaticBody2D" parent="."]
+position = Vector2(880, 54)
+script = ExtResource("8")
+size = Vector2(160, 60)
+
+[node name="GroundUnderHill" type="StaticBody2D" parent="."]
+position = Vector2(850, 100)
+script = ExtResource("2")
+size = Vector2(260, 32)
+
+[node name="FarGround" type="StaticBody2D" parent="."]
+position = Vector2(1250, 100)
+script = ExtResource("2")
+size = Vector2(240, 32)
+
+[node name="RightWall" type="StaticBody2D" parent="."]
+position = Vector2(1380, 0)
+script = ExtResource("2")
+size = Vector2(20, 232)
 
 [node name="Walker" parent="." instance=ExtResource("4")]
 position = Vector2(140, 28)

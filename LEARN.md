@@ -232,9 +232,42 @@ your HP and mana refill, and from now on dying brings you back there.
 
 ---
 
+## Milestone 8 — Slide & long jump
+
+New section past CheckpointB: double-jump onto the **Plateau**, then hold **S / ↓** on the
+**Hill** to slide down on your shield, and jump at the bottom. The gap after it is **150 px**.
+A running double jump only covers ~120 px, but a slide jump carries ~180 px.
+
+**Read**
+1. `scripts/slope.gd`: a ramp is a `CollisionPolygon2D` triangle instead of a rectangle.
+2. `scripts/player.gd`: the *Sliding* exports, `floor_snap_length` in `_ready()`, and step 6,
+   now split into **6a slide / 6b coast / 6c run**.
+3. `tests/test_slide.gd`: no slip when idle, slide speed, long jump, braking.
+
+**Key ideas**
+- **The floor normal.** `get_floor_normal()` is the arrow pointing out of the ground. On a slope it
+  leans downhill, so `signf(normal.x)` *is* the downhill direction. No angle math needed.
+- **Momentum = "don't cap the speed".** Running can never exceed `run_speed`, so any extra speed
+  must come from a slide. Branch 6b lets that extra fade slowly (`momentum_drag`) instead of
+  snapping back. Jump during it and the speed comes along. That's the whole "long jump" feature.
+  Holding the opposite direction skips 6b, so braking still feels normal.
+- **Floor snapping.** At 280 px/s down a slope you move sideways faster than gravity pulls you
+  down, so you'd lift off every frame. `floor_snap_length` pulls you back onto the surface.
+- **Design with numbers.** The gap was first 200 px. A simulated run showed *neither* jump made it
+  (slide ~180, run ~120), so it became 150 px, which has a clear margin both ways. Measure, don't guess.
+
+**Try this**
+- Jump the gap without sliding. Then with a slide. Feel the difference.
+- Set `momentum_drag` to 0 (speed never fades) or 600 (fades almost at once), then retry the gap.
+- In `main.tscn`, make the *Hill* steeper: `size = Vector2(80, 60)`. Is it still slideable? Try
+  `Vector2(50, 60)` (steeper than 45°) and see it turn into a wall.
+- Slide down the Hill and over spikes: sliding counts as shield-down, so it pogo-protects you.
+
+---
+
 ## Milestone 9 — Boss
 
-*(Built in parallel by a helper agent while milestone 7 was made. Milestone 8, the slide, comes later.)*
+*(Built in parallel by a helper agent while milestone 7 was made.)*
 
 Open `scenes/boss_arena.tscn` and press **F6** (runs just this scene). Green block, 6 HP, bar above it.
 
