@@ -229,3 +229,47 @@ your HP and mana refill, and from now on dying brings you back there.
 - Set CheckpointB's `cost` to 0 in the Inspector (select it in `main.tscn`).
 - In `checkpoint.gd`, remove the `body.is_on_floor()` check. Now you can save in mid-air while
   pogoing past the flag. Is that better or worse?
+
+---
+
+## Milestone 9 — Boss
+
+*(Built in parallel by a helper agent while milestone 7 was made. Milestone 8, the slide, comes later.)*
+
+Open `scenes/boss_arena.tscn` and press **F6** (runs just this scene). Green block, 6 HP, bar above it.
+
+| Boss does | You do |
+|---|---|
+| Winds up (stands still 1 s) | get ready; hit it now if you're close |
+| Charges to the far wall | jump over it (it's 32 px tall, a jump is 60), pogo it on the way |
+| Dazed at the wall | throw the shield or pogo it |
+| Fires 3 bullets back | jump them, or block with the held shield |
+| **Phase 2** (orange, below half HP) | same fight 1.6× faster; every other bullet flies HIGH, so stay down for those |
+
+**Read**
+1. `scripts/boss.gd`: the diagram at the top, then `_physics_process`. Same state-machine idea as
+   `shield.gd`, with four states and one shared `_timer`.
+2. `hit()` in `boss.gd`, next to `hit()` in `enemy.gd`: the boss overrides it to lose HP, and only
+   calls `super()` (pay gold, vanish) on the last hit.
+3. `scenes/boss_arena.tscn`: a test arena with its own HUD. Note the `Camera2D` override at the
+   bottom: limits keep the whole arena on screen.
+4. `tests/test_boss.gd`: case 2 throws a real shield through the boss.
+
+**Key ideas**
+- **Override + `super()`.** The boss reuses Enemy's contact damage, pogo group and gold payout.
+  It only changes *when* it dies.
+- **Invulnerability window.** A thrown shield passes through the boss twice (out and back).
+  The throw lasts 0.72 s, so hits are ignored for 0.75 s afterwards. The flicker shows it.
+  The first try used 0.6 s; the test caught a close throw hitting twice.
+- **Phases with one number.** Phase 2 multiplies `delta` by `rage`. Movement gets faster *and*
+  every timer runs out sooner, with no second copy of each setting.
+- **Fair attacks.** Every attack has an answer: wind-up = warning, charge = jump/pogo,
+  daze = punish, low bullet = jump/block, high bullet = stay down. A boss is a test of the
+  moves you already learned.
+- **Signals for later.** `defeated` is emitted but nothing listens yet. The world map will.
+
+**Try this**
+- Select *Boss* in the arena: set `rage` to 2.5 for a brutal phase 2, or `max_hp` to 2 to test the end quickly.
+- Set `hit_cooldown` to 0.3 and run `test_boss.gd`. Read which check fails and why.
+- Set `shots` to 6 and `shot_interval` to 0.25 for a bullet wall. Is it still fair?
+- Beat it without throwing once (pogo only), then without pogoing once (throws only).
