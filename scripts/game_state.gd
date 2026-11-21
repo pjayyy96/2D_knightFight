@@ -35,6 +35,15 @@ func add_gold(amount: int) -> void:
 	changed.emit()
 
 
+## Pay gold. Returns false (and pays nothing) if there isn't enough. Same pattern as spend_mana.
+func spend_gold(amount: int) -> bool:
+	if gold < amount:
+		return false
+	gold -= amount
+	changed.emit()
+	return true
+
+
 ## Lose health. Returns true if that was the last of it.
 func take_damage(amount: int) -> bool:
 	hp = maxi(hp - amount, 0) # never below 0

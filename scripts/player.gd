@@ -41,7 +41,8 @@ var facing := 1.0 # 1 = right, -1 = left. The shield reads this.
 
 
 func _ready() -> void:
-	spawn_point = position
+	add_to_group("player") # so checkpoints can recognise us
+	spawn_point = global_position # checkpoints overwrite this
 	shield.player = self # the shield needs to know who to follow and fly back to
 
 
@@ -146,9 +147,9 @@ func take_hit(from: Vector2) -> void:
 	velocity = Vector2(away * knockback.x, knockback.y)
 
 
-## Back to the start with full health and mana; gold is kept. (Checkpoints: milestone 7.)
+## Back to the last checkpoint (or the start) with full health and mana; gold is kept.
 func die() -> void:
-	position = spawn_point
+	global_position = spawn_point
 	velocity = Vector2.ZERO
 	invincible_timer = 0.0
 	GameState.refill()

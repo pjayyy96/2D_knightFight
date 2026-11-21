@@ -199,3 +199,33 @@ The top-left line shows `HP 3/3  MANA 4/4  GOLD 0`.
 - Throw 4 times without pogoing. Then refill by bouncing on the Walker or on bullets.
 - Set `MAX_HP` to 1 in `game_state.gd` for "one hit = death" mode.
 - Set the player's `invincible_time` to 0 and stand in the spikes. Count how fast you die.
+
+---
+
+## Milestone 7 — Checkpoints
+
+Two flags: **CheckpointA** before the Shooter, **CheckpointB** at the far end past the spike
+field. Stand at one **on the ground** and press **S / ↓** to pay 1 gold. The flag turns green,
+your HP and mana refill, and from now on dying brings you back there.
+
+**Read**
+1. `scripts/checkpoint.gd`: the whole feature in ~40 lines.
+2. `scripts/game_state.gd`: `spend_gold()` is the same "pay, or refuse and pay nothing" pattern
+   as `spend_mana()`.
+3. `scripts/player.gd`: `_ready()` joins the `"player"` group, and `die()` uses `spawn_point`.
+4. `tests/test_checkpoint.gd`: five cases, from "too far away" to "don't charge twice".
+
+**Key ideas**
+- **One variable does the work.** Respawning already used `spawn_point`. A checkpoint just
+  *overwrites* it. Good earlier design makes later features small.
+- **Reusing a key by context.** S in the air = shield down. S on the ground at a flag = save.
+  Fewer keys to learn, and no new input action needed.
+- **Gold as a decision.** Saving costs the same gold you'll want for upgrades later. That
+  trade-off is what makes a currency interesting.
+- **Feedback.** Without enough gold the label changes to "need 1g". Silence would feel like a bug.
+
+**Try this**
+- Kill the Walker (1 gold), light CheckpointA, then die on purpose. Where do you come back?
+- Set CheckpointB's `cost` to 0 in the Inspector (select it in `main.tscn`).
+- In `checkpoint.gd`, remove the `body.is_on_floor()` check. Now you can save in mid-air while
+  pogoing past the flag. Is that better or worse?

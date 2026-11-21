@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1"]
 [ext_resource type="Script" path="res://scripts/platform.gd" id="2"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://scenes/enemy_walker.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://scenes/enemy_shooter.tscn" id="5"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="6"]
+[ext_resource type="PackedScene" path="res://scenes/checkpoint.tscn" id="7"]
 
 [node name="Main" type="Node2D"]
 
@@ -60,6 +61,12 @@ position = Vector2(140, 28)
 
 [node name="Shooter" parent="." instance=ExtResource("5")]
 position = Vector2(330, 76)
+
+[node name="CheckpointA" parent="." instance=ExtResource("7")]
+position = Vector2(230, 68)
+
+[node name="CheckpointB" parent="." instance=ExtResource("7")]
+position = Vector2(700, 68)
 
 [node name="Player" parent="." instance=ExtResource("1")]
 position = Vector2(0, 60)
