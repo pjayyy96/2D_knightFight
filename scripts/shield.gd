@@ -23,6 +23,15 @@ var _velocity := Vector2.ZERO
 var _traveled := 0.0
 
 
+func _ready() -> void:
+	add_to_group("shield") # enemies and bullets look for this tag
+
+
+## Enemies die only to a FLYING shield; a held one just blocks bullets.
+func is_flying() -> bool:
+	return state != State.HELD
+
+
 ## Called by the player. Returns false if the shield isn't in hand.
 func throw(direction: float) -> bool:
 	if state != State.HELD:
@@ -71,12 +80,13 @@ func _touching_wall() -> bool:
 
 
 ## Asked by the player every frame while the shield is held down.
-## Anything in the "pogo" group can be bounced on: spikes now, enemies and bullets later.
-## A *group* is a tag you put on nodes; this way the shield doesn't need to know what spikes are.
-func touching_pogo_target() -> bool:
+## Returns the thing under the shield that can be bounced on (spikes, enemy, bullet), or null.
+## Anything in the "pogo" group counts. A *group* is a tag you put on nodes; this way the
+## shield doesn't need to know what spikes or enemies are.
+func pogo_target() -> Area2D:
 	if state != State.HELD:
-		return false # shield is flying: nothing under your feet
+		return null # shield is flying: nothing under your feet
 	for area in get_overlapping_areas():
 		if area.is_in_group("pogo"):
-			return true
-	return false
+			return area
+	return null

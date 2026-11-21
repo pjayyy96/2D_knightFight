@@ -83,9 +83,14 @@ func _physics_process(delta: float) -> void:
 	# 7. Pogo, BEFORE moving. The shield sits below our feet, so it reaches spikes first.
 	#    Bouncing now (before this frame's move) means the body never gets there.
 	#    Only while falling, otherwise rising out of a bounce would re-trigger it.
+	#    Whatever we bounced on gets hit too (enemies die, bullets pop; spikes have no hit()).
 	shield_down = not is_on_floor() and Input.is_action_pressed("shield_down")
-	if shield_down and velocity.y > 0.0 and shield.touching_pogo_target():
-		pogo()
+	if shield_down and velocity.y > 0.0:
+		var target: Area2D = shield.pogo_target()
+		if target:
+			pogo()
+			if target.has_method("hit"):
+				target.hit()
 
 	# 8. Let Godot move us and resolve collisions (also updates is_on_floor()).
 	move_and_slide()

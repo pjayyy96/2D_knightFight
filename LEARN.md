@@ -118,3 +118,42 @@ Controls: **A/D or ←/→** move · **Space / W / ↑** jump · **J** throw shi
 - Set `pogo_velocity` to -450 for huge bounces, or -150 for tiny ones.
 - Set the shield's `down_offset` to 8 (closer to the feet) and run `test_pogo.gd`. Does it still
   pass? Why or why not? (Hint: 7 px per frame.)
+
+---
+
+## Milestone 5 — Enemies
+
+Red **Walker** patrols LowPlatform. Purple **Shooter** sits near the pit and fires yellow bullets left.
+
+| You do | Walker / Shooter | Bullet |
+|---|---|---|
+| Thrown shield hits it | dies | gone |
+| Held shield (facing it) | – | **blocked** |
+| Pogo onto it | dies, you bounce | gone, you bounce |
+| Touch it with your body | you die | you die |
+
+**Read**
+1. `scripts/enemy.gd`: the shared rules. Note `class_name Enemy`.
+2. `scripts/enemy_walker.gd`, `scripts/enemy_shooter.gd`, `scripts/bullet.gd`: each starts with
+   `extends Enemy` and only adds what's different.
+3. `scripts/player.gd` step 7: the pogo now calls `hit()` on whatever it bounced on.
+4. `tests/test_enemies.gd`: builds a fresh mini-level for each case.
+
+**Key ideas**
+- **Inheritance.** `Enemy` holds the rules every hostile thing shares. `bullet.gd` *overrides* two
+  functions: it also dies on walls, and *any* shield stops it, not just a flying one. `super()`
+  means "also run the parent's version". Forget it in the shooter's `_ready()` and it stops
+  being pogo-able, because the parent's `_ready()` is what adds it to the `"pogo"` group.
+- **Raycasts as feelers.** The walker turns when its floor ray finds nothing (a ledge) or its wall
+  ray finds something. After turning it re-aims at once (`force_raycast_update`). Without that,
+  next frame reads the *old* side's answer, turns back, and it jitters at the edge forever.
+- **Spawning.** The shooter `preload`s the bullet scene once and `instantiate()`s a new copy every
+  2 s. Bullets are added to the *level*, not the shooter, so they fly on their own.
+- **Reuse pays off.** The pogo code from milestone 4 didn't change at all. Enemies just joined the
+  `"pogo"` group.
+
+**Try this**
+- Stand facing the Shooter and let bullets hit your shield. Then throw the shield and get hit.
+- Kill the Walker by pogo from HighPlatform, and the Shooter with a throw.
+- Select *Shooter* in `main.tscn` and set `fire_interval` to 0.5. Can you pogo across the bullet stream?
+- Delete `super()` in `enemy_shooter.gd`, run, and try to pogo the Shooter. Then put it back.
