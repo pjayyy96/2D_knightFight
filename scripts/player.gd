@@ -33,11 +33,17 @@ extends CharacterBody2D
 @export var slide_accel := 600.0     # how fast a slide picks up speed
 @export var momentum_drag := 150.0   # how slowly leftover slide speed fades (lower = longer jumps)
 
+@export_group("Dashing")
+@export var dash_speed := 380.0      # sideways speed during an air dash
+@export var dash_time := 0.15        # how long the dash lasts (380 × 0.15 ≈ 57 px)
+
 signal hurt # emitted by take_hit() when it actually hurts
 signal died # emitted by die(); checkpoints (milestone 7) will listen to it
 
 var invincible_timer := 0.0
 var heal_timer := 0.0 # how long the current heal has been charging (0 = not charging)
+var dash_timer := 0.0 # > 0 while dashing
+var can_dash := false # one air dash per jump; landing or a pogo gives it back
 
 var air_jumps_left := 0
 var shield_down := false # true while airborne + holding S/↓ (or sliding). The shield reads this.
@@ -71,6 +77,7 @@ func _physics_process(delta: float) -> void:
 	if is_on_floor():
 		coyote_timer = coyote_time
 		air_jumps_left = air_jumps
+		can_dash = true
 	else:
 		coyote_timer -= delta
 
@@ -118,6 +125,25 @@ func _physics_process(delta: float) -> void:
 		velocity.x = move_toward(velocity.x, dir * run_speed, acceleration * delta)
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, friction * delta)
+
+	# 6d. Air dash: a short, straight burst sideways, ignoring gravity. Air only, once per jump.
+	#     It runs AFTER steps 1-6 and simply overwrites the velocity they computed.
+	if Input.is_action_just_pressed("dash") and can_dash and not is_on_floor():
+		if dir != 0.0:
+			facing = signf(dir) # dash where you point; with no key held, where you face
+		dash_timer = dash_time
+		can_dash = false
+		velocity.y = 0.0 # forget the jump we're in, or the check below would end the dash at once
+	if dash_timer > 0.0:
+		if velocity.y < 0.0:
+			# Something pushed us UP this frame (a jump in step 4, or a hit's knockback):
+			# that ends the dash. Jumping keeps the dash speed, and step 6b turns it into a long jump.
+			dash_timer = 0.0
+		else:
+			dash_timer -= delta
+			velocity = Vector2(facing * dash_speed, 0.0) # y = 0: no falling while dashing
+			if dash_timer <= 0.0:
+				velocity.x = facing * run_speed # end at running speed, or 6b would coast for ages
 
 	# 7. Pogo, BEFORE moving. The shield sits below our feet, so it reaches spikes first.
 	#    Bouncing now (before this frame's move) means the body never gets there.
@@ -182,10 +208,13 @@ func bounce_on(target: Node, give_mana := true) -> void:
 
 
 ## The bounce itself.
-## The bounce also gives back the air jumps, so you can chain: bounce → double jump → bounce...
+## The bounce also gives back the air jumps and the dash, so you can chain:
+## bounce → dash → double jump → bounce...
 func pogo() -> void:
 	velocity.y = pogo_velocity
 	air_jumps_left = air_jumps
+	can_dash = true
+	dash_timer = 0.0 # a bounce ends any dash in progress
 
 
 ## Called by enemies, bullets and spikes when they touch our body.

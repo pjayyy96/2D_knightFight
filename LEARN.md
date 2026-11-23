@@ -3,7 +3,7 @@
 An original 2D platformer in Godot 4. Each milestone adds one mechanic. Read the
 files listed, run the game (F5), then try the tweaks.
 
-Controls: **A/D or ←/→** move · **Space / W / ↑** jump · **J** throw shield (milestone 3) · **S / ↓** shield down (milestone 4) · **K** hold to heal (milestone 12)
+Controls: **A/D or ←/→** move · **Space / W / ↑** jump · **J** throw shield (milestone 3) · **S / ↓** shield down (milestone 4) · **K** hold to heal (milestone 12) · **L / Shift** air dash (milestone 13)
 
 ---
 
@@ -436,3 +436,39 @@ starts over. It does nothing at full HP or with less than 2 mana (so it never wa
 - Remove `dir == 0.0 and` from `can_heal`. Now you can heal while running. Why does that make the
   charge time almost pointless?
 - Give the heal its own sound or particle burst at the moment `GameState.heal(1)` runs.
+
+---
+
+## Milestone 13 — Air dash (**L** or **Shift**)
+
+In the air, press **L** (or **Shift**) for a short, flat burst sideways: about 57 px in 0.15 s,
+with no falling. Hold ←/→ to pick the direction (otherwise you dash the way you face).
+One dash per jump. **Landing or a pogo gives it back.** Jump during the dash (double jump)
+and you keep the dash speed: a dash-jump.
+
+**Read**
+1. `scripts/player.gd` step **6d**: start the dash, then hold the velocity flat until the timer runs out.
+2. `scripts/player.gd` step **2** and `pogo()`: `can_dash = true`, the two refills.
+3. `tests/test_dash.gd`: seven cases, one per rule above.
+
+**Key ideas**
+- **Overwrite, don't untangle.** Steps 1-6 compute gravity and running as usual. Step 6d runs
+  *after* them and just replaces the velocity. A new move that "takes over" the body is often
+  easiest written last, so it wins.
+- **A resource that refills on skill.** Like air jumps, the dash comes back on a pogo. Now one
+  pogo buys a double jump *and* a dash, so chaining bounces across a spike pit becomes a combo.
+- **End states matter.** When the dash ends we drop to `run_speed`. Without that line, step 6b
+  ("faster than running? keep coasting") would carry 380 px/s for ages. A move that's fine for
+  0.15 s can feel broken in the frames *after* it.
+- **Tests catch timing bugs.** The first version cancelled itself: dashing while still rising
+  meant `velocity.y < 0`, which the code read as "a jump ended the dash". Zeroing `velocity.y`
+  at the start fixed it. And in the test, a key held for 1 frame was sometimes missed, so it holds 2.
+
+**Try this**
+- Jump over the spike pit, pogo a spike, dash, double jump. How far can you chain?
+- In the Inspector (Player), set **Dash Speed** to `600` and **Dash Time** to `0.1`. Same distance,
+  different feel. Which one reads better?
+- Remove `and not is_on_floor()` from the dash start. Ground dashes now work. Why would you then
+  also want a cooldown?
+- Delete the line `velocity.x = facing * run_speed` (end of the dash). Dash on flat ground, then
+  in the air. Notice the long coast, and which step causes it.
