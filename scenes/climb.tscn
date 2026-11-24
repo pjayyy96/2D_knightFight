@@ -1,0 +1,114 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1"]
+[ext_resource type="Script" path="res://scripts/platform.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/spikes.gd" id="3"]
+[ext_resource type="PackedScene" path="res://scenes/charger.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://scenes/flyer.tscn" id="5"]
+[ext_resource type="Script" path="res://scripts/hud.gd" id="6"]
+[ext_resource type="PackedScene" path="res://scenes/checkpoint.tscn" id="7"]
+[ext_resource type="PackedScene" path="res://scenes/mystery_chest.tscn" id="8"]
+[ext_resource type="PackedScene" path="res://scenes/level_exit.tscn" id="9"]
+[ext_resource type="Script" path="res://scripts/level_start.gd" id="10"]
+[ext_resource type="PackedScene" path="res://scenes/enemy_shooter.tscn" id="11"]
+
+[node name="Climb" type="Node2D"]
+
+[node name="LevelStart" type="Node2D" parent="."]
+position = Vector2(-160, 84)
+script = ExtResource("10")
+title = "2: The Climb"
+
+[node name="LeftWall" type="StaticBody2D" parent="."]
+position = Vector2(-210, 0)
+script = ExtResource("2")
+size = Vector2(20, 232)
+
+[node name="Ground" type="StaticBody2D" parent="."]
+position = Vector2(100, 100)
+script = ExtResource("2")
+size = Vector2(600, 32)
+
+[node name="PitFloor" type="StaticBody2D" parent="."]
+position = Vector2(650, 100)
+script = ExtResource("2")
+size = Vector2(500, 32)
+
+[node name="SpikePit" type="Area2D" parent="."]
+position = Vector2(650, 78)
+script = ExtResource("3")
+width = 496.0
+
+[node name="Step1" type="StaticBody2D" parent="."]
+position = Vector2(460, 40)
+script = ExtResource("2")
+size = Vector2(48, 12)
+
+[node name="Step2" type="StaticBody2D" parent="."]
+position = Vector2(550, 0)
+script = ExtResource("2")
+size = Vector2(48, 12)
+
+[node name="Step3" type="StaticBody2D" parent="."]
+position = Vector2(650, -30)
+script = ExtResource("2")
+size = Vector2(48, 12)
+
+[node name="Step4" type="StaticBody2D" parent="."]
+position = Vector2(770, 10)
+script = ExtResource("2")
+size = Vector2(48, 12)
+
+[node name="SecretLedge" type="StaticBody2D" parent="."]
+position = Vector2(560, -110)
+script = ExtResource("2")
+size = Vector2(56, 12)
+color = Color(0.55, 0.45, 0.25, 1)
+
+[node name="Chest" parent="." instance=ExtResource("8")]
+position = Vector2(560, -122)
+
+[node name="FarGround" type="StaticBody2D" parent="."]
+position = Vector2(1200, 100)
+script = ExtResource("2")
+size = Vector2(600, 32)
+
+[node name="RightWall" type="StaticBody2D" parent="."]
+position = Vector2(1510, 0)
+script = ExtResource("2")
+size = Vector2(20, 232)
+
+[node name="Charger" parent="." instance=ExtResource("4")]
+position = Vector2(220, 78)
+
+[node name="Flyer" parent="." instance=ExtResource("5")]
+position = Vector2(700, -80)
+
+[node name="Charger2" parent="." instance=ExtResource("4")]
+position = Vector2(1150, 78)
+
+[node name="Shooter" parent="." instance=ExtResource("11")]
+position = Vector2(1420, 76)
+
+[node name="CheckpointA" parent="." instance=ExtResource("7")]
+position = Vector2(360, 68)
+
+[node name="CheckpointB" parent="." instance=ExtResource("7")]
+position = Vector2(940, 68)
+
+[node name="LevelExit" parent="." instance=ExtResource("9")]
+position = Vector2(1480, 60)
+level_id = 2
+
+[node name="Player" parent="." instance=ExtResource("1")]
+position = Vector2(-120, 72)
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource("6")
+
+[node name="Label" type="Label" parent="HUD"]
+offset_left = 8.0
+offset_top = 6.0
+offset_right = 400.0
+offset_bottom = 26.0
+theme_override_font_sizes/font_size = 12

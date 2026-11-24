@@ -472,3 +472,48 @@ and you keep the dash speed: a dash-jump.
   also want a cooldown?
 - Delete the line `velocity.x = facing * run_speed` (end of the dash). Dash on flat ground, then
   in the air. Notice the long coast, and which step causes it.
+
+---
+
+## Milestone 13½ — State machines, a mystery chest, and level 2: The Climb
+
+Two new enemies that **think in states**, a chest that might bite, a start arch and a glowing
+exit in every level, and a new level between the Road and the Boss (the boss is now level 3).
+
+- **Charger** (orange): patrols like a walker. Get close on its level and it stops and
+  **flashes** (the wind-up), then **charges** at you. It stops at walls and ledges and stands
+  **stunned** (grey) for a moment. That's your chance.
+- **Flyer** (purple): bobs in the air. Get close and it **shivers**, then **swoops** at the spot
+  where you stood. Move during the shiver and it misses. It flies home slowly, then rests.
+- **Mystery chest**: stand at it and press **S**: +5 gold, a full refill, or a **mimic**
+  (a charger jumps out on the far side and winds up). Level 1 hides one on the sky ledge.
+- **Level 2, The Climb**: a parkour path of small steps over a spike pit, with a flyer
+  hunting you on the way. The chest sits on a secret ledge above step 3 (double jump).
+
+**Read**
+1. `scripts/charger.gd`: `enum State`, the `match state:` block, and `enter()`.
+2. `scripts/flyer.gd`: the same pattern with different states.
+3. `scripts/mystery_chest.gd` `open()`: `randi() % Reward.size()` and the mimic spawn.
+4. `scripts/level_exit.gd` `_draw()` and the looping tween on `glow`; `scripts/level_start.gd`.
+5. `tests/test_state_enemies.gd`: ten cases, one per rule above.
+
+**Key ideas**
+- **A state machine = one variable + one `match`.** The enemy is in exactly ONE state. Each
+  state only answers two questions: *what do I do this frame?* and *when do I switch?* Adding a
+  state means adding one branch, without untangling a pile of `if`s and booleans.
+- **One door in: `enter()`.** Every switch goes through it, so the timer and the color can never
+  be forgotten. A bug like "stunned but still red" can't happen.
+- **Telegraph, then punish.** Both enemies show a *tell* (flash, shiver) before they attack.
+  A hit you could have seen coming feels fair. A hit with no warning feels cheap.
+- **Reuse by extending.** The charger `extends "res://scripts/enemy_walker.gd"` and calls
+  `super(delta)` in PATROL, so it got walking, turning and stomping for free.
+- **Randomness you can test.** `reward = -1` means random. Tests set 0/1/2 to force each case.
+- **Renumbering levels** is one line in `world_map.gd`'s `LEVELS`, plus each level's own id.
+
+**Try this**
+- Bait a charger toward the spike pit edge and let it stun itself. Then stomp it.
+- In the Inspector (Charger), set **Alert Time** to `0.15`. Is it still fair?
+- In `flyer.gd`, set `target = player.global_position` every frame in SWOOP (homing).
+  Why does the dodge stop working, and why is that less fun?
+- Add a fifth charger state, `TAUNT`, after STUNNED. Only `enum`, `COLORS` and one `match`
+  branch need to change.

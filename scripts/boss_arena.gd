@@ -1,9 +1,9 @@
 extends Node2D
-## The boss level (world map level 2). Its exit is the boss: beat it and the level is done.
+## The boss level (world map level 3). Its exit is the boss: beat it and the level is done.
 ## boss.gd already announces `defeated` (milestone 9). We only listen. The boss doesn't need
 ## to know about maps or saving, the same way GameState doesn't know the HUD exists.
 
-@export var level_id := 2
+@export var level_id := 3
 
 @onready var message: Label = $HUD/Message
 

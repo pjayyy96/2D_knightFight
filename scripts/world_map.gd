@@ -10,7 +10,8 @@ extends Node2D
 ## id is what its exit / boss tells GameState when you win. Level 3 = one more line here.
 const LEVELS := [
 	{"name": "1: The Road", "scene": "res://scenes/main.tscn"},
-	{"name": "2: The Boss", "scene": "res://scenes/boss_arena.tscn"},
+	{"name": "2: The Climb", "scene": "res://scenes/climb.tscn"},
+	{"name": "3: The Boss", "scene": "res://scenes/boss_arena.tscn"},
 ]
 
 const SPACING := 160.0  # px between two level spots

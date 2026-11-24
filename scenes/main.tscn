@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1"]
 [ext_resource type="Script" path="res://scripts/platform.gd" id="2"]
@@ -9,8 +9,17 @@
 [ext_resource type="PackedScene" path="res://scenes/checkpoint.tscn" id="7"]
 [ext_resource type="Script" path="res://scripts/slope.gd" id="8"]
 [ext_resource type="PackedScene" path="res://scenes/level_exit.tscn" id="9"]
+[ext_resource type="PackedScene" path="res://scenes/charger.tscn" id="10"]
+[ext_resource type="PackedScene" path="res://scenes/flyer.tscn" id="11"]
+[ext_resource type="PackedScene" path="res://scenes/mystery_chest.tscn" id="12"]
+[ext_resource type="Script" path="res://scripts/level_start.gd" id="13"]
 
 [node name="Main" type="Node2D"]
+
+[node name="LevelStart" type="Node2D" parent="."]
+position = Vector2(-360, 84)
+script = ExtResource("13")
+title = "1: The Road"
 
 [node name="Ground" type="StaticBody2D" parent="."]
 position = Vector2(0, 100)
@@ -88,6 +97,15 @@ position = Vector2(140, 28)
 
 [node name="Shooter" parent="." instance=ExtResource("5")]
 position = Vector2(330, 76)
+
+[node name="SkyChest" parent="." instance=ExtResource("12")]
+position = Vector2(150, -112)
+
+[node name="Flyer" parent="." instance=ExtResource("11")]
+position = Vector2(880, -40)
+
+[node name="Charger" parent="." instance=ExtResource("10")]
+position = Vector2(1220, 78)
 
 [node name="CheckpointA" parent="." instance=ExtResource("7")]
 position = Vector2(230, 68)

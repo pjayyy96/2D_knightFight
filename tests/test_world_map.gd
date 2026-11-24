@@ -7,6 +7,7 @@ extends SceneTree
 ## Every save goes to a TEMP file (gs.save_path), so running this never touches your real save.
 
 const MAP := "res://scenes/world_map.tscn"
+const CLIMB := "res://scenes/climb.tscn"
 const ARENA := "res://scenes/boss_arena.tscn"
 
 var failures := 0
@@ -94,14 +95,18 @@ func _initialize() -> void:
 	gs.gold = 5
 	await press("jump")
 	await frames(2)
-	check(current_scene != null and current_scene.scene_file_path == ARENA,
-		"jump enters the boss arena")
+	check(current_scene != null and current_scene.scene_file_path == CLIMB,
+		"jump enters level 2, the Climb")
 	check(gs.hp == gs.MAX_HP and gs.mana == gs.MAX_MANA, "entering a level refills HP and mana")
 	check(gs.gold == 5, "gold carries into the level")
+	check(current_scene.get_node("LevelExit").level_id == 2, "the Climb's exit finishes level 2")
 
-	# 7. Boss defeated in the arena: level 2 done, message shown, back to the map.
+	# 7. Boss (level 3) defeated in the arena: level 3 done, message shown, back to the map.
+	gs.complete_level(2)
+	change_scene_to_file(ARENA)
+	await frames(2)
 	current_scene.get_node("Boss").defeated.emit() # pretend the last hit landed
-	check(gs.is_completed(2), "beating the boss completes level 2")
+	check(gs.is_completed(3), "beating the boss completes level 3")
 	check(current_scene.get_node("HUD/Message").text != "", "the arena shows the win")
 	await back_on_map()
 
